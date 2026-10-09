@@ -74,7 +74,6 @@ function App() {
   return (
     <>
       <Header />
-      <p>Esta es una aplicación de finanzas personales desarrollada con React y Vite.</p>
       <Summary
         ingresos={ingresos}
         gastos={gastos}

@@ -50,6 +50,7 @@ export function ExpenseForm({ setGastos, categorias}) {
 
     return (
         <div>
+            <h3>Histórico de gastos</h3>
             <label>Concepto: </label>
 
             <input placeholder="ej: Compra Mercadona" value={concepto} onChange={(event) => {
