@@ -1,13 +1,13 @@
 import { useState } from 'react'
 
-export function ExpenseForm({ setGastos, categorias}) {
+export function ExpenseForm({ setGastos, categorias }) {
 
     const [concepto, setConcepto] = useState('')
     const [importe, setImporte] = useState('')
     const [fecha, setFecha] = useState('')
     const [categoria, setCategoria] = useState('')
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => { // async => función asíncrona: controlar el tiempo de respuesta de la petición HTTP a fastapi
 
         if (!concepto) {
             alert('Introduce un concepto')
@@ -30,22 +30,40 @@ export function ExpenseForm({ setGastos, categorias}) {
         }
 
         /* 
-        * Añadimos un nuevo gasto al array de gastos. Para ello, usamos la función setGastos que nos ha pasado el componente padre (App.jsx) como prop. 
-        * Esta función recibe como argumento una función que recibe el estado anterior (prevGastos) y devuelve el nuevo estado (un array con los gastos anteriores y el nuevo gasto). 
+        * Registramos un gasto mediante una petición HTTP POST a la ruta /gastos del backend.
         */
-        setGastos(prevGastos => [...prevGastos, {
-            id: prevGastos.length + 1,
-            fecha,
-            concepto,
-            importe: Number(importe),
-            categoria
-        }])
+        try {
+            const respuesta = await fetch('http://127.0.0.1:8000/gastos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ // JSON.stringify(...) convierte los datos del formulario a JSON para enviarlos a FastAPI
+                    concepto,
+                    importe: Number(importe),
+                    fecha,
+                    categoria
+                })
+            })
 
-        //Limpiamos los estados concepto e importe para que los inputs queden vacíos después de añadir un gasto
-        setConcepto('')
-        setImporte('')
-        setFecha('')
-        setCategoria('')
+            if (!respuesta.ok) {
+                throw new Error('No se ha podido guardar el gasto')
+            }
+
+            const nuevoGasto = await respuesta.json()
+
+            setGastos(prevGastos => [...prevGastos, nuevoGasto]) // setGastos(...) añade a la interfaz el registro devuelto por el backend, no un identificador inventado por React.
+
+            //Limpiamos los estados concepto e importe para que los inputs queden vacíos después de añadir un gasto
+            setConcepto('')
+            setImporte('')
+            setFecha('')
+            setCategoria('')
+
+        } catch (error) {
+            console.error('Error al registrar el gasto:', error)
+            alert('No se ha podido guardar el gasto')
+        }
     }
 
     return (

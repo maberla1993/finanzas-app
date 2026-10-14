@@ -7,8 +7,6 @@ import {
     calcularPorcentajeGastos,
     calcularCategoriaMayorGasto,
     calcularPorcentajesPorCategoria,
-    calcularTotalGastosPorMes,
-    calcularGastosPorCategoriaPorMes,
     calcularGastosPorMes
 } from "./utils/finanzas";
 import { IncomeExpenseChart } from './components/IncomeExpenseChart' //importamos el componente creado para mostrar el gráfico de las barras
@@ -70,14 +68,16 @@ export function Summary({ ingresos, gastos, categorias }) {
                     Selecciona un mes
                 </option>
                 {meses.map((mes) => (
-                    <option key={mes.nombre} value={mes.valor}>
+                    <option key={mes.valor} value={mes.valor}>
                         {mes.nombre}
                     </option>
                 ))}
             </select>
             <select
                 value={añoSeleccionado}
-                onChange={(event) => setAñoSeleccionado(Number(event.target.value))}
+                onChange={(event) => 
+                    setAñoSeleccionado(Number(event.target.value))
+                }
             >
                 <option value="" disabled>
                     Selecciona un año

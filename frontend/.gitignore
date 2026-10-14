@@ -45,3 +45,15 @@ venv/
 # Configuración local
 .DS_Store
 Thumbs.db
+
+# Python
+backend/.venv/
+__pycache__/
+*.py[cod]
+
+# Base de datos local
+backend/finanzas.db
+
+# React
+frontend/node_modules/
+frontend/dist/
