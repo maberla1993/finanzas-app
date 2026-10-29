@@ -9,14 +9,14 @@ export function ExpenseForm({ setGastos, categorias }) {
 
     const handleSubmit = async () => { // async => función asíncrona: controlar el tiempo de respuesta de la petición HTTP a fastapi
 
-        if (!concepto) {
+        if (!concepto.trim()) {
             alert('Introduce un concepto')
             return
         }
         if (!importe) {
             alert('Introduce un importe')
             return
-        } else if (importe <= 0) {
+        } else if (Number(importe) <= 0) {
             alert('Introduce un importe válido')
             return
         }
@@ -29,7 +29,7 @@ export function ExpenseForm({ setGastos, categorias }) {
             return
         }
 
-        /* 
+        /*
         * Registramos un gasto mediante una petición HTTP POST a la ruta /gastos del backend.
         */
         try {
@@ -39,7 +39,7 @@ export function ExpenseForm({ setGastos, categorias }) {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ // JSON.stringify(...) convierte los datos del formulario a JSON para enviarlos a FastAPI
-                    concepto,
+                    concepto: concepto.trim(),
                     importe: Number(importe),
                     fecha,
                     categoria
@@ -67,41 +67,81 @@ export function ExpenseForm({ setGastos, categorias }) {
     }
 
     return (
-        <div>
-            <h3>Histórico de gastos</h3>
-            <label>Concepto: </label>
+        <section className="expense-form-card">
+            <div className="form-header">
+                <h3>Añadir gasto</h3>
+                <p>Registra un nuevo movimiento de dinero</p>
+            </div>
 
-            <input placeholder="ej: Compra Mercadona" value={concepto} onChange={(event) => {
-                //Creamos un input controlado para el concepto del gasto. El valor del input es el estado concepto y cada vez que el usuario escribe algo en el input, se actualiza el estado concepto con el valor del input.
-                setConcepto(event.target.value)
-            }} />
+            <div className="form-fields">
+                <div className="form-field">
+                    <label htmlFor="gasto-concepto">Concepto</label>
 
-            <label>Importe: </label>
-            <input type="number" placeholder="ej: 100" value={importe} onChange={(event) => {
-                setImporte(event.target.value)
-            }} />
+                    <input
+                        id="gasto-concepto"
+                        type="text"
+                        placeholder="Ej.: Compra Mercadona"
+                        value={concepto}
+                        onChange={(event) => {
+                            //Creamos un input controlado para el concepto del gasto. El valor del input es el estado concepto y cada vez que el usuario escribe algo en el input, se actualiza el estado concepto con el valor del input.
+                            setConcepto(event.target.value)
+                        }}
+                    />
+                </div>
 
-            <label>Fecha: </label>
-            <input type="date" value={fecha} onChange={(event) => {
-                setFecha(event.target.value)
-            }} />
+                <div className="form-field">
+                    <label htmlFor="gasto-importe">Importe (€)</label>
 
-            <label>Categoría: </label>
-            <select value={categoria} onChange={(event) => {
-                setCategoria(event.target.value)
-            }}>
-                <option value="">Selecciona una categoría</option>
-                {categorias.map((nombreCategoria) => (
-                    <option key={nombreCategoria} value={nombreCategoria}>
-                        {nombreCategoria}
-                    </option>
-                ))}
-            </select>
+                    <input
+                        id="gasto-importe"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="Ej.: 100"
+                        value={importe}
+                        onChange={(event) => {
+                            setImporte(event.target.value)
+                        }}
+                    />
+                </div>
 
-            <button onClick={handleSubmit}>
+                <div className="form-field">
+                    <label htmlFor="gasto-fecha">Fecha</label>
+
+                    <input
+                        id="gasto-fecha"
+                        type="date"
+                        value={fecha}
+                        onChange={(event) => {
+                            setFecha(event.target.value)
+                        }}
+                    />
+                </div>
+
+                <div className="form-field">
+                    <label htmlFor="gasto-categoria">Categoría</label>
+
+                    <select
+                        id="gasto-categoria"
+                        value={categoria}
+                        onChange={(event) => {
+                            setCategoria(event.target.value)
+                        }}
+                    >
+                        <option value="">Selecciona una categoría</option>
+
+                        {categorias.map((nombreCategoria) => (
+                            <option key={nombreCategoria} value={nombreCategoria}>
+                                {nombreCategoria}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            <button className="expense-submit-button" onClick={handleSubmit}>
                 Añadir gasto
             </button>
-        </div>
+        </section>
     )
 }
-

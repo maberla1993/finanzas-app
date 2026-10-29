@@ -122,6 +122,32 @@ export function calcularTotalGastosPorMes(gastos, mes, año) {
     return calcularTotalGastos(gastosPorMes)
 }
 
+/**
+ * Filtrar ingresos por un mes y año concretos
+ */
+export function filtrarIngresosPorMes(ingresos, mes, año) {
+
+    return ingresos.filter((ingreso) => {
+        const fecha = new Date(ingreso.fecha)
+
+        return fecha.getMonth() + 1 === mes &&
+            fecha.getFullYear() === año
+    })
+}
+
+/**
+ * Calcular el total de ingresos de un mes concreto
+ */
+export function calcularTotalIngresosPorMes(ingresos, mes, año) {
+
+    const ingresosPorMes = filtrarIngresosPorMes(ingresos, mes, año)
+
+    return ingresosPorMes.reduce(
+        (total, ingreso) => total + Number(ingreso.importe),
+        0
+    )
+}
+
 /////////////////////////////////
 
 /**

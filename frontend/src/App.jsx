@@ -3,18 +3,25 @@
 
 import './App.css'
 import { useState, useEffect } from 'react' //useEffect nos permitirá ejecutar una petición a FastAPI cuando se cargue el componente 
+import { eliminarGastoAPI, eliminarIngresoAPI, editarGastoAPI, editarIngresoAPI } from './api.jsx'
 import { Header } from './Header.jsx'
 import { Footer } from './Footer.jsx'
 import { Summary } from './Summary.jsx'
 import { ExpenseList } from './ExpenseList.jsx'
 import { ExpenseForm } from './ExpenseForm.jsx'
+import { IncomeForm } from './IncomeForm.jsx'
+import { IncomeList } from './IncomeList.jsx'
 
 function App() {
-  const ingresos = 1340;
 
-  //Creamos un estado para los gastos, que es un array de objetos. Cada objeto representa un gasto y tiene las propiedades fecha, concepto e importe.
-  const [gastos, setGastos] = useState([]);
+  const [gastos, setGastos] = useState([]); // estado para almacenar los gastos obtenidos del backend. Inicialmente es un array vacío.
+  const [ingresos, setIngresos] = useState([]); // estado para almacenar los ingresos obtenidos del backend. 
 
+  // Estados compartidos para filtrar el resumen y los históricos por mes y año.
+  const [mesSeleccionado, setMesSeleccionado] = useState(new Date().getMonth() + 1)
+  const [añoSeleccionado, setAñoSeleccionado] = useState(new Date().getFullYear())
+
+  //Con useEffect() hacemos una petición HTTP al backend para obtener los gastos y los ingresos cuando se carga el componente.
   useEffect(() => {
     fetch('http://127.0.0.1:8000/gastos') //fetch solicita los gastos al backend
       .then(respuesta => respuesta.json())
@@ -25,6 +32,18 @@ function App() {
         console.error('Error al cargar los gastos:', error);
       });
   }, []); // array vacío [] al final es importante: indica que el efecto no debe repetirse en cada renderizado.
+
+  //useEffect() para cargar los ingresos
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/ingresos') //fetch solicita los ingresos al backend
+      .then(respuesta => respuesta.json())
+      .then(datos => {
+        setIngresos(datos);
+      })
+      .catch(error => {
+        console.error('Error al cargar los ingresos:', error);
+      });
+  }, []);
 
   const categorias = [
     'Alimentación',
@@ -37,16 +56,16 @@ function App() {
     'Otros'
   ]
 
+  const categoriasIngresos = [
+    'Nómina',
+    'Otros'
+  ]
+
   // función que permite eliminar un gasto mediante el id con el uso de DELETE para conectar con el backend y actualizar la base de datos
   const eliminarGasto = async (id) => {
     try {
-      const respuesta = await fetch(`http://127.0.0.1:8000/gastos/${id}`, {
-        method: 'DELETE'
-      })
 
-      if (!respuesta.ok) {
-        throw new Error('No se ha podido eliminar el gasto')
-      }
+      await eliminarGastoAPI(id)
 
       // setGastos() elimina el gasto de la interfaz solo después de recibir una respuesta satisfactoria.
       setGastos(prevGastos =>
@@ -59,9 +78,25 @@ function App() {
     }
   }
 
+  const eliminarIngreso = async (id) => {
+    try {
+
+      await eliminarIngresoAPI(id)
+
+      // setIngreso() elimina el gasto de la interfaz solo después de recibir una respuesta satisfactoria.
+      setIngresos(prevIngreso =>
+        prevIngreso.filter((ingreso) => ingreso.id !== id)
+      )
+
+    } catch (error) {
+      console.error('Error al eliminar el ingreso:', error)
+      alert('No se ha podido eliminar el ingreso')
+    }
+  }
+
 
   // función que permite editar el importe de un gasto mediante el id con el uso de PUT para conectar con el backend y actualizar la base de datos
-  const editarImporte = async (id, nuevoImporte) => { //async y await permiten esperar la respuesta del backend.
+  const editarGasto = async (id, nuevoImporte) => { //async y await permiten esperar la respuesta del backend.
     try {
       const gastoActual = gastos.find((gasto) => gasto.id === id)
 
@@ -69,24 +104,12 @@ function App() {
         return
       }
 
-      const respuesta = await fetch(`http://127.0.0.1:8000/gastos/${id}`, { //fetch() envía el nuevo importe a FastAPI.
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          concepto: gastoActual.concepto,
-          importe: nuevoImporte,
-          fecha: gastoActual.fecha,
-          categoria: gastoActual.categoria
-        })
+      const gastoActualizado = await editarGastoAPI(id, {
+        concepto: gastoActual.concepto,
+        importe: nuevoImporte,
+        fecha: gastoActual.fecha,
+        categoria: gastoActual.categoria
       })
-
-      if (!respuesta.ok) {
-        throw new Error('No se ha podido actualizar el gasto')
-      }
-
-      const gastoActualizado = await respuesta.json()
 
       // actualizamos el estado de gastos con el gasto actualizado, manteniendo los demás gastos sin cambios
       setGastos((gastosAnteriores) =>
@@ -101,29 +124,87 @@ function App() {
     }
   }
 
+  const editarIngreso = async (id, nuevoImporte) => { //async y await permiten esperar la respuesta del backend.
+    try {
+      const ingresoActual = ingresos.find((ingreso) => ingreso.id === id)
+
+      if (!ingresoActual) {
+        return
+      }
+
+      const ingresoActualizado = await editarIngresoAPI(id, {
+        concepto: ingresoActual.concepto,
+        importe: nuevoImporte,
+        fecha: ingresoActual.fecha,
+        categoria: ingresoActual.categoria
+      })
+
+      setIngresos((ingresosAnteriores) =>
+        ingresosAnteriores.map((ingreso) =>
+          ingreso.id === id ? ingresoActualizado : ingreso
+        )
+      )
+
+    } catch (error) {
+      console.error('Error al editar el ingreso:', error)
+      alert('No se ha podido guardar el cambio')
+    }
+  }
+
+
   return (
-    <>
+    <div className="app">
       <Header />
-      <Summary
-        ingresos={ingresos}
-        gastos={gastos}
-        categorias={categorias}
-      />
-      <br />
-      <ExpenseForm
-        setGastos={setGastos}
-        categorias={categorias}
-      />
-      <br />
-      <ExpenseList
-        gastos={gastos}
-        eliminarGasto={eliminarGasto}
-        editarImporte={editarImporte}
-        categorias={categorias}
-      />
+
+      <main className="app-main">
+        <section className="dashboard-section">
+          <Summary
+            ingresos={ingresos}
+            gastos={gastos}
+            categorias={categorias}
+            mesSeleccionado={mesSeleccionado}
+            setMesSeleccionado={setMesSeleccionado}
+            añoSeleccionado={añoSeleccionado}
+            setAñoSeleccionado={setAñoSeleccionado}
+          />
+        </section>
+
+        <section className="transactions-section">
+          <div className="transaction-column">
+            <IncomeForm setIngresos={setIngresos} />
+
+            <IncomeList
+              ingresos={ingresos}
+              eliminarIngreso={eliminarIngreso}
+              editarIngreso={editarIngreso}
+              categorias={categoriasIngresos}
+              mesSeleccionado={mesSeleccionado}
+              añoSeleccionado={añoSeleccionado}
+            />
+          </div>
+
+          <div className="transaction-column">
+            <ExpenseForm
+              setGastos={setGastos}
+              categorias={categorias}
+            />
+
+            <ExpenseList
+              gastos={gastos}
+              eliminarGasto={eliminarGasto}
+              editarGasto={editarGasto}
+              categorias={categorias}
+              mesSeleccionado={mesSeleccionado}
+              añoSeleccionado={añoSeleccionado}
+            />
+          </div>
+        </section>
+      </main>
+
       <Footer />
-    </>
+    </div>
   )
+
 }
 
 export default App
